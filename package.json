@@ -1,0 +1,22 @@
+{
+  "name": "sheets-to-tabbly-caller",
+  "version": "1.0.0",
+  "description": "Fetch leads from Google Sheets and trigger Tabbly calls",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node index.js"
+  },
+  "keywords": [
+    "google-sheets",
+    "tabbly",
+    "auto-caller"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "googleapis": "^140.0.0",
+    "dotenv": "^16.3.1"
+  }
+}
