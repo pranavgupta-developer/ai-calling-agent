@@ -109,6 +109,5 @@ Desktop.ini
 # ======================================================
 supabase/.temp/
 
-.claude
-.next
+.claude/
 Real-estate-ai-calling-agent-dev-brief.md
