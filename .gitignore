@@ -108,3 +108,7 @@ Desktop.ini
 # Ignore only local generated files
 # ======================================================
 supabase/.temp/
+
+.claude
+.next
+Real-estate-ai-calling-agent-dev-brief.md
