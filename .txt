@@ -1,0 +1,381 @@
+Build them in this order:
+
+Landing Page 
+Agency Signup
+Login
+Email Verification
+Onboarding (Create Agency)
+Agency Dashboard
+Client Portal
+Properties
+Leads
+AI Calls Dashboard
+
+-- ============================================================
+-- REAL ESTATE AI SAAS - INITIAL DATABASE SCHEMA
+-- ============================================================
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ============================================================
+-- AGENCIES (TENANTS)
+-- ============================================================
+
+CREATE TABLE public.agencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+
+    email TEXT NOT NULL,
+    phone TEXT,
+    website TEXT,
+
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    country TEXT,
+
+    timezone TEXT DEFAULT 'UTC',
+
+    logo_url TEXT,
+
+    business_hours JSONB,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- ROLES
+-- ============================================================
+
+CREATE TABLE public.roles (
+
+    id SMALLSERIAL PRIMARY KEY,
+
+    name TEXT UNIQUE NOT NULL,
+
+    description TEXT
+);
+
+INSERT INTO public.roles(name,description)
+VALUES
+('OWNER','Full agency access'),
+('ADMIN','Administrative access'),
+('MANAGER','Manage team and leads'),
+('AGENT','Sales agent'),
+('CLIENT','Client portal user');
+
+-- ============================================================
+-- AGENCY USERS
+-- ============================================================
+
+CREATE TABLE public.agency_users (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    auth_user_id UUID NOT NULL
+        REFERENCES auth.users(id)
+        ON DELETE CASCADE,
+
+    role_id SMALLINT NOT NULL
+        REFERENCES public.roles(id),
+
+    first_name TEXT,
+    last_name TEXT,
+
+    email TEXT,
+
+    phone TEXT,
+
+    avatar_url TEXT,
+
+    is_active BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    UNIQUE(auth_user_id)
+);
+
+-- ============================================================
+-- CLIENT USERS
+-- ============================================================
+
+CREATE TABLE public.client_users (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    auth_user_id UUID
+        REFERENCES auth.users(id)
+        ON DELETE CASCADE,
+
+    full_name TEXT NOT NULL,
+
+    email TEXT,
+
+    phone TEXT,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- PROPERTIES
+-- ============================================================
+
+CREATE TABLE public.properties (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    agent_id UUID
+        REFERENCES public.agency_users(id)
+        ON DELETE SET NULL,
+
+    title TEXT NOT NULL,
+
+    description TEXT,
+
+    property_type TEXT,
+
+    listing_type TEXT,
+
+    price NUMERIC(15,2),
+
+    bedrooms INTEGER,
+
+    bathrooms INTEGER,
+
+    area_sqft NUMERIC(12,2),
+
+    address TEXT,
+
+    city TEXT,
+
+    state TEXT,
+
+    country TEXT,
+
+    status TEXT DEFAULT 'AVAILABLE',
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- LEADS
+-- ============================================================
+
+CREATE TABLE public.leads (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    assigned_agent UUID
+        REFERENCES public.agency_users(id)
+        ON DELETE SET NULL,
+
+    name TEXT,
+
+    email TEXT,
+
+    phone TEXT,
+
+    source TEXT,
+
+    status TEXT DEFAULT 'NEW',
+
+    notes TEXT,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- AI CALLS
+-- ============================================================
+
+CREATE TABLE public.ai_calls (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    lead_id UUID
+        REFERENCES public.leads(id)
+        ON DELETE SET NULL,
+
+    direction TEXT,
+
+    call_status TEXT,
+
+    duration_seconds INTEGER,
+
+    recording_url TEXT,
+
+    transcript_summary TEXT,
+
+    started_at TIMESTAMPTZ,
+
+    ended_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- CONVERSATIONS
+-- ============================================================
+
+CREATE TABLE public.conversations (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    call_id UUID NOT NULL
+        REFERENCES public.ai_calls(id)
+        ON DELETE CASCADE,
+
+    speaker TEXT NOT NULL,
+
+    message TEXT NOT NULL,
+
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- APPOINTMENTS
+-- ============================================================
+
+CREATE TABLE public.appointments (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    property_id UUID
+        REFERENCES public.properties(id)
+        ON DELETE SET NULL,
+
+    lead_id UUID
+        REFERENCES public.leads(id)
+        ON DELETE SET NULL,
+
+    agent_id UUID
+        REFERENCES public.agency_users(id)
+        ON DELETE SET NULL,
+
+    appointment_time TIMESTAMPTZ,
+
+    status TEXT DEFAULT 'SCHEDULED',
+
+    notes TEXT,
+
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- AI SETTINGS
+-- ============================================================
+
+CREATE TABLE public.ai_settings (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID UNIQUE NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    voice TEXT,
+
+    language TEXT,
+
+    greeting TEXT,
+
+    system_prompt TEXT,
+
+    max_call_duration INTEGER DEFAULT 600,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- BILLING
+-- ============================================================
+
+CREATE TABLE public.billing (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    agency_id UUID UNIQUE NOT NULL
+        REFERENCES public.agencies(id)
+        ON DELETE CASCADE,
+
+    plan TEXT,
+
+    subscription_status TEXT,
+
+    stripe_customer_id TEXT,
+
+    stripe_subscription_id TEXT,
+
+    renewal_date TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+
+CREATE INDEX idx_agency_users_agency
+ON public.agency_users(agency_id);
+
+CREATE INDEX idx_client_users_agency
+ON public.client_users(agency_id);
+
+CREATE INDEX idx_properties_agency
+ON public.properties(agency_id);
+
+CREATE INDEX idx_leads_agency
+ON public.leads(agency_id);
+
+CREATE INDEX idx_ai_calls_agency
+ON public.ai_calls(agency_id);
+
+CREATE INDEX idx_appointments_agency
+ON public.appointments(agency_id);
+
+-- ============================================================
+-- ENABLE ROW LEVEL SECURITY
+-- ============================================================
+
+ALTER TABLE public.agencies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agency_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.client_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_calls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.billing ENABLE ROW LEVEL SECURITY;
