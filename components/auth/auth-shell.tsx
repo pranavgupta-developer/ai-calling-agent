@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils";
 type AuthShellProps = {
   children: React.ReactNode;
   hero: React.ReactNode;
+  /** Wider content area for forms with many fields (e.g. signup) */
+  wide?: boolean;
 };
 
-export function AuthShell({ children, hero }: AuthShellProps) {
+export function AuthShell({ children, hero, wide = false }: AuthShellProps) {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -32,14 +34,14 @@ export function AuthShell({ children, hero }: AuthShellProps) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.14),transparent_45%)]"
       />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:flex-row">
-        <div className="flex flex-1 flex-col px-6 py-8 sm:px-10 lg:px-12">
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-8 sm:px-10 lg:px-12">
           <header className="mb-8 flex items-center justify-between">
             <Link
               href="/"
@@ -70,7 +72,10 @@ export function AuthShell({ children, hero }: AuthShellProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center pb-10"
+            className={cn(
+              "mx-auto flex w-full flex-1 flex-col pb-10",
+              wide ? "max-w-lg justify-start pt-4" : "max-w-md justify-center"
+            )}
           >
             {children}
           </motion.div>
@@ -78,7 +83,7 @@ export function AuthShell({ children, hero }: AuthShellProps) {
           <AuthFooter />
         </div>
 
-        <div className="hidden flex-1 items-center justify-center p-8 lg:flex lg:p-12">
+        <div className="hidden flex-1 items-center justify-center p-8 lg:sticky lg:top-0 lg:flex lg:h-screen lg:p-12">
           {hero}
         </div>
       </div>

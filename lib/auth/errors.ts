@@ -1,6 +1,9 @@
 type AuthErrorCode =
   | "invalid_credentials"
   | "email_not_verified"
+  | "email_already_exists"
+  | "weak_password"
+  | "verification_email_failed"
   | "too_many_attempts"
   | "network_error"
   | "server_error"
@@ -43,13 +46,47 @@ export function mapAuthError(error: {
   }
 
   if (
+    message.includes("user already registered") ||
+    message.includes("already exists") ||
+    message.includes("duplicate") ||
+    code === "user_already_exists"
+  ) {
+    return {
+      code: "email_already_exists",
+      message: "An account with this email already exists.",
+    };
+  }
+
+  if (
+    message.includes("weak password") ||
+    message.includes("password") && message.includes("weak") ||
+    code === "weak_password"
+  ) {
+    return {
+      code: "weak_password",
+      message: "Password doesn't meet security requirements.",
+    };
+  }
+
+  if (
+    message.includes("verification") &&
+    (message.includes("failed") || message.includes("could not"))
+  ) {
+    return {
+      code: "verification_email_failed",
+      message:
+        "We couldn't send the verification email. Please try again.",
+    };
+  }
+
+  if (
     message.includes("too many requests") ||
     message.includes("rate limit") ||
     error.status === 429
   ) {
     return {
       code: "too_many_attempts",
-      message: "Too many login attempts. Please try again later.",
+      message: "Too many attempts. Please try again later.",
     };
   }
 
