@@ -1,6 +1,7 @@
 import { Building2, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function PropertiesPage() {
   return (
@@ -13,10 +14,10 @@ export default function PropertiesPage() {
             details.
           </p>
         </div>
-        <Button className="gap-2">
+        <Link href="/dashboard/properties/new" className={buttonVariants({ className: "gap-2" })}>
           <Plus className="size-4" />
           Add Property
-        </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-20">
@@ -25,10 +26,10 @@ export default function PropertiesPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Add your first property listing to get started.
         </p>
-        <Button className="mt-6 gap-2" variant="outline">
+        <Link href="/dashboard/properties/new" className={buttonVariants({ variant: "outline", className: "mt-6 gap-2" })}>
           <Plus className="size-4" />
           Add Property
-        </Button>
+        </Link>
       </div>
     </div>
   );
