@@ -53,7 +53,6 @@ export async function createProperty(data: PropertyFormValues) {
       .insert({
         ...parsedData.data,
         agency_id: agencyId,
-        status: "available",
       } as any)
       .select()
       .single();

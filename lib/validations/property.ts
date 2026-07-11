@@ -29,6 +29,12 @@ export const propertyFormSchema = z.object({
     "rental",
   ]),
 
+  status: z.enum([
+    "available",
+    "pending",
+    "sold",
+  ]).default("available"),
+
   price: z.coerce
     .number()
     .positive({

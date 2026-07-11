@@ -62,12 +62,14 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           property_type: initialData.property_type?.toLowerCase() as any,
           listing_type: initialData.listing_type?.toLowerCase() as any,
           price_type: initialData.price_type?.toLowerCase() as any,
+          status: initialData.status?.toLowerCase() as any,
         }
       : {
           title: "",
           description: "",
           property_type: "apartment",
           listing_type: "sale",
+          status: "available",
           price: 0,
           price_type: "fixed",
           bedrooms: 0,
@@ -175,7 +177,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                 <h3 className="text-xl font-semibold border-b pb-2">
                   Property Details
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="property_type"
@@ -184,7 +186,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                         <FormLabel>Property Type</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="bg-white/5 border-white/10">
@@ -213,7 +215,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                         <FormLabel>Listing Type</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="bg-white/5 border-white/10">
@@ -223,6 +225,32 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                           <SelectContent>
                             <SelectItem value="sale">Sale</SelectItem>
                             <SelectItem value="rental">Rental</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white/5 border-white/10">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="available">Available</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="sold">Sold</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -263,7 +291,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                         <FormLabel>Price Type</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="bg-white/5 border-white/10">
