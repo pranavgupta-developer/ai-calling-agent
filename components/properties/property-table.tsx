@@ -44,7 +44,7 @@ export function PropertyTable({ properties, totalPages }: PropertyTableProps) {
         <p className="text-muted-foreground max-w-sm mb-6">
           You don&apos;t have any properties matching your filters, or you haven&apos;t created one yet.
         </p>
-        <Link 
+        <Link
           href="/dashboard/properties/new"
           className={cn(buttonVariants({ variant: "default" }), "rounded-xl shadow-lg")}
         >
