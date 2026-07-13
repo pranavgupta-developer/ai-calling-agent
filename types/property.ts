@@ -20,4 +20,5 @@ export interface Property {
   is_featured: boolean;
   created_at: string;
   updated_at: string;
+  cover_image_url?: string;
 }

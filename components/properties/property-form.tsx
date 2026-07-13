@@ -30,6 +30,9 @@ import { createProperty } from "@/lib/actions/properties/create-property";
 import { updateProperty } from "@/lib/actions/properties/update-property";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { PropertyImage } from "@/lib/actions/properties/images/get-images";
+import { ImageUploader } from "./images/ImageUploader";
+import { ImageGallery } from "./images/ImageGallery";
 
 const AMENITIES = [
   "Swimming Pool",
@@ -48,11 +51,13 @@ const AMENITIES = [
 
 interface PropertyFormProps {
   initialData?: PropertyFormValues & { id?: string };
+  initialImages?: PropertyImage[];
 }
 
-export function PropertyForm({ initialData }: PropertyFormProps) {
+export function PropertyForm({ initialData, initialImages = [] }: PropertyFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<PropertyImage[]>(initialImages);
 
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema) as any,
@@ -96,9 +101,9 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         const response = await createProperty(data);
         if (response.error) {
           toast.error(response.error);
-        } else {
-          toast.success("Listing created successfully.");
-          router.push("/dashboard/listings");
+        } else if (response.data) {
+          toast.success("Listing created. You can now add images.");
+          router.push(`/dashboard/properties/${response.data.id}/edit`);
         }
       }
     } catch (error) {
@@ -486,6 +491,29 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           </div>
         </form>
       </Form>
+
+      {initialData?.id && (
+        <div className="mt-12 space-y-8 pt-8 border-t border-white/10">
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Property Images</h3>
+            <p className="text-muted-foreground mb-6">
+              Upload and manage up to 10 images for this listing. Drag to reorder. The first image will be used as the cover.
+            </p>
+          </div>
+          
+          <ImageUploader 
+            propertyId={initialData.id} 
+            currentImageCount={images.length}
+            onUploadSuccess={(newImage) => setImages(prev => [...prev, newImage])}
+          />
+          
+          <ImageGallery 
+            propertyId={initialData.id}
+            images={images}
+            onImagesChange={setImages}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

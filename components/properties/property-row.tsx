@@ -96,11 +96,21 @@ export function PropertyRow({ property }: PropertyRowProps) {
   return (
     <TableRow className={isDeleting ? "opacity-50" : ""}>
       <TableCell className="font-medium">
-        <div className="flex flex-col">
-          <span className="truncate max-w-[200px]">{property.title}</span>
-          <span className="text-xs text-muted-foreground capitalize">
-            {property.property_type} • {property.listing_type}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+            {property.cover_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={property.cover_image_url} alt={property.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-secondary" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="truncate max-w-[200px]">{property.title}</span>
+            <span className="text-xs text-muted-foreground capitalize">
+              {property.property_type} • {property.listing_type}
+            </span>
+          </div>
         </div>
       </TableCell>
       <TableCell>{formatINR(property.price)}</TableCell>

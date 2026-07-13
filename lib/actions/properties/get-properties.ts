@@ -66,12 +66,58 @@ export async function getProperties({
     const { data, error, count } = await dbQuery;
 
     if (error) {
-      console.error("Error fetching properties:", error);
-      return { error: "Failed to load properties." };
+      console.error("Error fetching properties:", error?.message || JSON.stringify(error));
+      return { error: `Failed to load properties: ${error?.message || 'Unknown error'}` };
     }
 
+    const properties = data as any[];
+    const pathsToSign: string[] = [];
+    const propertyToPathMap = new Map<string, string>();
+
+    // Fetch images separately to avoid schema cache relation errors
+    const propertyIds = properties.map(p => p.id);
+    if (propertyIds.length > 0) {
+      const { data: imagesData } = await supabase
+        .from("property_images")
+        .select("property_id, storage_path, display_order")
+        .in("property_id", propertyIds)
+        .order("display_order", { ascending: true });
+        
+      if (imagesData) {
+        imagesData.forEach((img) => {
+          if (!propertyToPathMap.has(img.property_id)) {
+            pathsToSign.push(img.storage_path);
+            propertyToPathMap.set(img.property_id, img.storage_path);
+          }
+        });
+      }
+    }
+
+    let signedUrlsMap = new Map<string, string>();
+    if (pathsToSign.length > 0) {
+      const { data: signedUrls, error: signError } = await supabase.storage
+        .from("listing-images")
+        .createSignedUrls(pathsToSign, 60 * 60); // 1 hour expiry
+        
+      if (!signError && signedUrls) {
+        signedUrls.forEach((su, index) => {
+          if (su.signedUrl) {
+            signedUrlsMap.set(pathsToSign[index], su.signedUrl);
+          }
+        });
+      }
+    }
+
+    const finalData: Property[] = properties.map((prop) => {
+      const path = propertyToPathMap.get(prop.id);
+      return {
+        ...prop,
+        cover_image_url: path ? signedUrlsMap.get(path) : undefined,
+      };
+    });
+
     return {
-      data: data as Property[],
+      data: finalData,
       count: count || 0,
       totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE),
     };
