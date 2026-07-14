@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { Agency, OperatingHours } from "@/types/agency";
+import { seedDefaultServices } from "@/lib/actions/services/seed-services";
 
 type CreateAgencyInput = {
   name: string;
@@ -94,6 +95,14 @@ export async function createAgencyProfile(input: CreateAgencyInput) {
     if (agencyUserError) {
       console.error("Error linking user to agency:", agencyUserError);
       return { error: `Failed to link your user account to the new agency. Details: ${agencyUserError?.message || "Unknown error"}` };
+    }
+  }
+
+  // 4. Seed default services for the newly created agency
+  if (!existingAgency) {
+    const seedResult = await seedDefaultServices(agency.id);
+    if (!seedResult.success) {
+      console.warn("Failed to seed default services, but agency was created:", seedResult.error);
     }
   }
 
