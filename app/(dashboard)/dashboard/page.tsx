@@ -5,36 +5,88 @@ import {
   Home,
   PhoneCall,
   Users,
+  CheckCircle2,
+  Clock,
+  Tag,
+  Star,
+  Activity,
+  Archive,
 } from "lucide-react";
+import { getDashboardData } from "@/lib/actions/dashboard/get-dashboard-data";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { RecentListings } from "@/components/dashboard/recent-listings";
 
-const stats = [
-  {
-    label: "Active Properties",
-    value: "24",
-    change: "+3 this week",
-    icon: Home,
-  },
-  {
-    label: "Total Leads",
-    value: "187",
-    change: "+12 today",
-    icon: Users,
-  },
-  {
-    label: "AI Calls Today",
-    value: "43",
-    change: "89% qualified",
-    icon: PhoneCall,
-  },
-  {
-    label: "Appointments",
-    value: "8",
-    change: "3 upcoming",
-    icon: CalendarCheck,
-  },
-];
+export default async function DashboardPage() {
+  const { stats, recentListings, error } = await getDashboardData();
 
-export default function DashboardPage() {
+  if (error) {
+    return (
+      <div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed text-center p-8">
+        <div>
+          <h3 className="mt-4 text-lg font-semibold">Unable to load dashboard data.</h3>
+          <p className="mt-2 text-sm text-muted-foreground">Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Define our 10 stat cards (7 real, 3 placeholder)
+  const dashboardStats = [
+    {
+      label: "Total Listings",
+      value: stats?.total || 0,
+      icon: Home,
+    },
+    {
+      label: "Available Listings",
+      value: stats?.available || 0,
+      icon: CheckCircle2,
+    },
+    {
+      label: "Pending Listings",
+      value: stats?.pending || 0,
+      icon: Clock,
+    },
+    {
+      label: "Sold Listings",
+      value: stats?.sold || 0,
+      icon: Tag,
+    },
+    {
+      label: "Featured Listings",
+      value: stats?.featured || 0,
+      icon: Star,
+    },
+    {
+      label: "Active Listings",
+      value: stats?.active || 0,
+      icon: Activity,
+    },
+    {
+      label: "Inactive Listings",
+      value: stats?.inactive || 0,
+      icon: Archive,
+    },
+    {
+      label: "Appointments",
+      value: 0,
+      change: "Coming Soon",
+      icon: CalendarCheck,
+    },
+    {
+      label: "Conversations",
+      value: 0,
+      change: "Coming Soon",
+      icon: PhoneCall,
+    },
+    {
+      label: "Conversion Rate",
+      value: "0%",
+      change: "Coming Soon",
+      icon: BarChart3,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -47,48 +99,21 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div
+        {dashboardStats.map((stat) => (
+          <StatCard
             key={stat.label}
-            className="rounded-xl border border-border bg-card p-6 transition hover:border-border/80 hover:shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </p>
-              <stat.icon className="size-4 text-muted-foreground/60" />
-            </div>
-            <p className="mt-2 text-3xl font-bold tracking-tight">
-              {stat.value}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
-          </div>
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            change={stat.change}
+          />
         ))}
       </div>
 
-      {/* Quick actions */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center gap-2">
-            <Bot className="size-5 text-blue-500" />
-            <h2 className="font-semibold">AI Agent Activity</h2>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your AI agents handled 43 calls today with an 89% lead qualification
-            rate. 12 new leads were captured automatically.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="size-5 text-emerald-500" />
-            <h2 className="font-semibold">Weekly Performance</h2>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Revenue is up 15% this week. 8 appointments scheduled, 3 properties
-            under contract. Keep the momentum going.
-          </p>
-        </div>
+      {/* Recent Listings */}
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight mb-4">Recent Listings</h2>
+        <RecentListings properties={recentListings || []} />
       </div>
     </div>
   );
