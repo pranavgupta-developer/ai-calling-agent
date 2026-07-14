@@ -1,21 +1,23 @@
 "use server";
 
+import { ServiceManager } from "@/lib/services/service-manager";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function deleteService(serviceId: string) {
+export async function deleteService(id: string, source: 'DEFAULT' | 'OVERRIDE' | 'CUSTOM') {
   try {
-    const supabase = await createClient();
+    if (source === 'DEFAULT') {
+      return { error: "Default templates cannot be deleted." };
+    }
 
-    // 1. Authenticate user
+    const supabase = await createClient();
     const { data: authData, error: authError } = await supabase.auth.getUser();
+    
     if (authError || !authData.user) {
       return { error: "Unauthorized" };
     }
 
     const userId = authData.user.id;
-
-    // 2. Find agency_id for the user
     let { data: agencies } = await supabase
       .from("agencies")
       .select("id")
@@ -25,7 +27,7 @@ export async function deleteService(serviceId: string) {
     let agencyId = agencies?.id;
 
     if (!agencyId) {
-      const { data: agencyUser } = await supabase
+      let { data: agencyUser } = await supabase
         .from("agency_users")
         .select("agency_id")
         .eq("auth_user_id", userId)
@@ -34,45 +36,19 @@ export async function deleteService(serviceId: string) {
     }
 
     if (!agencyId) {
-      return { error: "User is not associated with any agency." };
+      return { error: "Agency not found" };
     }
 
-    // 3. Fetch service to ensure it's not a template
-    const { data: service, error: fetchError } = await supabase
-      .from("services")
-      .select("is_template, agency_id")
-      .eq("id", serviceId)
-      .single();
-
-    if (fetchError || !service) {
-      return { error: "Service not found." };
-    }
-
-    if (service.agency_id !== agencyId) {
-      return { error: "Unauthorized to delete this service." };
-    }
-
-    if (service.is_template) {
-      return { error: "Cannot delete a seeded template service." };
-    }
-
-    // 4. Delete service
-    const { error: deleteError } = await supabase
-      .from("services")
-      .delete()
-      .eq("id", serviceId)
-      .eq("agency_id", agencyId); // Double check
-
-    if (deleteError) {
-      console.error("Supabase delete error:", deleteError);
-      return { error: `Failed to delete service: ${deleteError.message}` };
+    if (source === 'OVERRIDE') {
+      await ServiceManager.removeOverride(agencyId, id);
+    } else {
+      await ServiceManager.deleteCustomService(agencyId, id);
     }
 
     revalidatePath("/dashboard/services");
-
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Delete service error:", error);
-    return { error: "An unexpected error occurred while deleting the service." };
+    return { error: error.message || "Failed to delete service" };
   }
 }

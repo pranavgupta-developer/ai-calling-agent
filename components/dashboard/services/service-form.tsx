@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createServiceSchema, type CreateServiceValues, pricingTypeEnum } from "@/lib/validations/service";
-import { Service } from "@/types/service";
+import { MergedService } from "@/types/service";
 
 import {
   Form,
@@ -28,7 +28,7 @@ import {
 import { useEffect } from "react";
 
 interface ServiceFormProps {
-  initialData?: Service | null;
+  initialData?: MergedService | null;
   onSubmit: (data: CreateServiceValues) => Promise<void>;
   isSubmitting: boolean;
 }

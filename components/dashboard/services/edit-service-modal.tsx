@@ -12,12 +12,12 @@ import {
 import { ServiceForm } from "./service-form";
 import { UpdateServiceValues } from "@/lib/validations/service";
 import { updateService } from "@/lib/actions/services/update-service";
-import { Service } from "@/types/service";
+import { MergedService } from "@/types/service";
 
 interface EditServiceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  service: Service | null;
+  service: MergedService | null;
   onSuccess?: () => void;
 }
 
@@ -28,7 +28,7 @@ export function EditServiceModal({ open, onOpenChange, service, onSuccess }: Edi
     if (!service) return;
     setIsSubmitting(true);
     try {
-      const result = await updateService(service.id, data);
+      const result = await updateService(service.id, data, service.source, service.templateId);
       if (result.error) {
         toast.error(result.error);
         return;

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Service } from "@/types/service";
+import { MergedService } from "@/types/service";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   CardFooter,
@@ -37,20 +36,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, MoreVertical, Edit, Trash2, Clock, DollarSign, Tag } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, Clock, DollarSign, Tag, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { toggleServiceStatus } from "@/lib/actions/services/toggle-service";
+import { toggleService } from "@/lib/actions/services/toggle-service";
 import { deleteService } from "@/lib/actions/services/delete-service";
 import { CreateServiceModal } from "./create-service-modal";
 import { EditServiceModal } from "./edit-service-modal";
 
 interface ServicesClientProps {
-  initialServices: Service[];
+  initialServices: MergedService[];
 }
 
 export function ServicesClient({ initialServices }: ServicesClientProps) {
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const [services, setServices] = useState<MergedService[]>(initialServices);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [filterPricing, setFilterPricing] = useState("ALL");
@@ -58,10 +56,10 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
+  const [serviceToEdit, setServiceToEdit] = useState<MergedService | null>(null);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<MergedService | null>(null);
 
   // Derive categories for filter
   const categories = useMemo(() => {
@@ -83,18 +81,22 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
     });
   }, [services, search, filterStatus, filterPricing, filterCategory]);
 
-  const handleToggleStatus = async (serviceId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (serviceId: string, currentStatus: boolean, source: 'DEFAULT' | 'OVERRIDE' | 'CUSTOM') => {
     // Optimistic update
     setServices(prev => prev.map(s => s.id === serviceId ? { ...s, active: !currentStatus } : s));
     
-    const result = await toggleServiceStatus(serviceId, currentStatus);
+    const result = await toggleService(serviceId, source, currentStatus);
     
     if (result.error) {
       toast.error(result.error);
       // Revert on error
       setServices(prev => prev.map(s => s.id === serviceId ? { ...s, active: currentStatus } : s));
     } else {
-      toast.success(result.active ? "Service activated" : "Service deactivated");
+      toast.success(!currentStatus ? "Service activated" : "Service deactivated");
+      if (source === 'DEFAULT') {
+        // If it was default, it just spawned an override, reload page to sync
+        window.location.reload();
+      }
     }
   };
 
@@ -102,12 +104,16 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
     if (!serviceToDelete) return;
     
     try {
-      const result = await deleteService(serviceToDelete.id);
+      const result = await deleteService(serviceToDelete.id, serviceToDelete.source);
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Service deleted");
-        setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
+        toast.success(serviceToDelete.source === 'OVERRIDE' ? "Template restored" : "Service deleted");
+        if (serviceToDelete.source === 'OVERRIDE') {
+          window.location.reload(); // Reload to get the base template
+        } else {
+          setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
+        }
       }
     } catch (error) {
       toast.error("An error occurred");
@@ -117,7 +123,7 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
     }
   };
 
-  const formatPrice = (service: Service) => {
+  const formatPrice = (service: MergedService) => {
     switch (service.pricing_type) {
       case "FREE":
         return "Free";
@@ -131,6 +137,17 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
         return "Variable";
       default:
         return "N/A";
+    }
+  };
+
+  const getSourceBadge = (source: string) => {
+    switch (source) {
+      case "DEFAULT":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-200">Default Template</Badge>;
+      case "OVERRIDE":
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50 border-purple-200">Customized</Badge>;
+      case "CUSTOM":
+        return <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50 border-green-200">Custom</Badge>;
     }
   };
 
@@ -233,11 +250,7 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
                     <Badge variant={service.active ? "default" : "secondary"}>
                       {service.active ? "Active" : "Inactive"}
                     </Badge>
-                    {service.is_template && (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-200">
-                        Template
-                      </Badge>
-                    )}
+                    {getSourceBadge(service.source)}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -247,23 +260,25 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
                     </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
-                      setServiceToEdit(service);
-                      setIsEditOpen(true);
-                    }}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    {!service.is_template && (
+                    {service.editable && (
+                      <DropdownMenuItem onClick={() => {
+                        setServiceToEdit(service);
+                        setIsEditOpen(true);
+                      }}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    {service.deletable && (
                       <DropdownMenuItem 
-                        className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                        className={service.source === 'OVERRIDE' ? "text-amber-600 focus:bg-amber-50 focus:text-amber-600" : "text-destructive focus:bg-destructive focus:text-destructive-foreground"}
                         onClick={() => {
                           setServiceToDelete(service);
                           setIsDeleteOpen(true);
                         }}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        {service.source === 'OVERRIDE' ? <RefreshCcw className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        {service.source === 'OVERRIDE' ? "Restore Default" : "Delete"}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -298,7 +313,7 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
                 </span>
                 <Switch 
                   checked={service.active} 
-                  onCheckedChange={() => handleToggleStatus(service.id, service.active)}
+                  onCheckedChange={() => handleToggleStatus(service.id, service.active, service.source)}
                   aria-label="Toggle active status"
                 />
               </CardFooter>
@@ -312,38 +327,39 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
         open={isCreateOpen} 
         onOpenChange={setIsCreateOpen} 
         onSuccess={() => {
-          // In a real app we'd re-fetch, but Server Actions revalidate the page
-          // A full reload or server component data refresh happens automatically 
-          // because we used revalidatePath
           window.location.reload();
         }}
       />
       
-      <EditServiceModal 
-        open={isEditOpen} 
-        onOpenChange={setIsEditOpen} 
-        service={serviceToEdit}
-        onSuccess={() => {
-          window.location.reload();
-        }}
-      />
+      {isEditOpen && serviceToEdit && (
+        <EditServiceModal 
+          open={isEditOpen} 
+          onOpenChange={setIsEditOpen} 
+          service={serviceToEdit}
+          onSuccess={() => {
+            window.location.reload();
+          }}
+        />
+      )}
 
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the service
-              "{serviceToDelete?.name}" from your agency.
+              {serviceToDelete?.source === 'OVERRIDE' 
+                ? `This will remove your customizations for "${serviceToDelete?.name}" and restore it back to the global template defaults.`
+                : `This action cannot be undone. This will permanently delete the service "${serviceToDelete?.name}" from your agency.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={serviceToDelete?.source === 'OVERRIDE' ? "bg-amber-600 hover:bg-amber-700 text-white" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
             >
-              Delete
+              {serviceToDelete?.source === 'OVERRIDE' ? "Restore" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,21 +1,19 @@
 "use server";
 
+import { ServiceManager } from "@/lib/services/service-manager";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function toggleServiceStatus(serviceId: string, currentStatus: boolean) {
+export async function toggleService(id: string, source: 'DEFAULT' | 'OVERRIDE' | 'CUSTOM', currentStatus: boolean) {
   try {
     const supabase = await createClient();
-
-    // 1. Authenticate user
     const { data: authData, error: authError } = await supabase.auth.getUser();
+    
     if (authError || !authData.user) {
       return { error: "Unauthorized" };
     }
 
     const userId = authData.user.id;
-
-    // 2. Find agency_id for the user
     let { data: agencies } = await supabase
       .from("agencies")
       .select("id")
@@ -25,7 +23,7 @@ export async function toggleServiceStatus(serviceId: string, currentStatus: bool
     let agencyId = agencies?.id;
 
     if (!agencyId) {
-      const { data: agencyUser } = await supabase
+      let { data: agencyUser } = await supabase
         .from("agency_users")
         .select("agency_id")
         .eq("auth_user_id", userId)
@@ -34,28 +32,23 @@ export async function toggleServiceStatus(serviceId: string, currentStatus: bool
     }
 
     if (!agencyId) {
-      return { error: "User is not associated with any agency." };
+      return { error: "Agency not found" };
     }
 
-    // 3. Toggle service status
-    const { data: updatedService, error: updateError } = await supabase
-      .from("services")
-      .update({ active: !currentStatus })
-      .eq("id", serviceId)
-      .eq("agency_id", agencyId) // enforce agency ownership
-      .select("active")
-      .single();
+    const newStatus = !currentStatus;
 
-    if (updateError) {
-      console.error("Supabase update error:", updateError);
-      return { error: `Failed to toggle service status: ${updateError.message}` };
+    if (source === 'DEFAULT') {
+      // Create an override just for the active status
+      await ServiceManager.createOverride(agencyId, id, { active: newStatus });
+    } else {
+      // Both override and custom can use toggleService (which just updates active by ID)
+      await ServiceManager.toggleService(agencyId, id, newStatus);
     }
 
     revalidatePath("/dashboard/services");
-
-    return { success: true, active: updatedService.active };
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error("Toggle service error:", error);
-    return { error: "An unexpected error occurred while toggling the service status." };
+    return { error: error.message || "Failed to toggle service" };
   }
 }

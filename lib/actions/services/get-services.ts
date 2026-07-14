@@ -1,13 +1,13 @@
 "use server";
 
+import { ServiceManager } from "@/lib/services/service-manager";
 import { createClient } from "@/lib/supabase/server";
-import { Service } from "@/types/service";
+import { MergedService } from "@/types/service";
 
 export async function getServices() {
   try {
     const supabase = await createClient();
 
-    // 1. Authenticate user
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData.user) {
       return { error: "Unauthorized" };
@@ -15,7 +15,7 @@ export async function getServices() {
 
     const userId = authData.user.id;
 
-    // 2. Find agency_id for the user
+    // Resolve agency_id. Typically this logic might live in middleware or higher level, but keeping it here.
     let { data: agencies } = await supabase
       .from("agencies")
       .select("id")
@@ -25,7 +25,7 @@ export async function getServices() {
     let agencyId = agencies?.id;
 
     if (!agencyId) {
-      const { data: agencyUser } = await supabase
+      let { data: agencyUser } = await supabase
         .from("agency_users")
         .select("agency_id")
         .eq("auth_user_id", userId)
@@ -34,24 +34,14 @@ export async function getServices() {
     }
 
     if (!agencyId) {
-      return { error: "User is not associated with any agency." };
+      return { error: "Agency not found" };
     }
 
-    // 3. Fetch services for this agency
-    const { data: services, error: fetchError } = await supabase
-      .from("services")
-      .select("*")
-      .eq("agency_id", agencyId)
-      .order("created_at", { ascending: false });
+    const services = await ServiceManager.getMergedServices(agencyId);
 
-    if (fetchError) {
-      console.error("Supabase fetch error:", JSON.stringify(fetchError, null, 2));
-      return { error: `Failed to fetch services: ${fetchError.message || JSON.stringify(fetchError)}` };
-    }
-
-    return { success: true, data: services as Service[] };
-  } catch (error) {
-    console.error("Get services error:", error);
-    return { error: "An unexpected error occurred while fetching services." };
+    return { success: true, data: services };
+  } catch (error: any) {
+    console.error("Failed to fetch services:", error);
+    return { error: error.message || "Failed to fetch services" };
   }
 }

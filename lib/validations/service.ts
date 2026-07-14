@@ -10,6 +10,7 @@ export const pricingTypeEnum = z.enum([
 ]);
 
 const baseServiceSchema = z.object({
+  template_id: z.string().uuid().optional().nullable(),
   name: z.string().min(2, "Service name must be at least 2 characters."),
   description: z.string().min(5, "Description must be at least 5 characters."),
   category: z.string().optional(),
