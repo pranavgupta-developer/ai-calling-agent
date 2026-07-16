@@ -122,6 +122,9 @@ export async function createAgent(input: Record<string, unknown>) {
   // Plan limit check
   const limitCheck = await checkAgentLimit(agencyId);
   if (!limitCheck.allowed) {
+    if (limitCheck.error) {
+      return { error: `Error checking plan limits: ${limitCheck.error}` };
+    }
     return { error: `Plan limit reached. You can only create up to ${limitCheck.limit} agents on your current plan.` };
   }
 
@@ -349,6 +352,9 @@ export async function duplicateAgent(id: string) {
   // Plan limit check
   const limitCheck = await checkAgentLimit(agencyId);
   if (!limitCheck.allowed) {
+    if (limitCheck.error) {
+      return { error: `Error checking plan limits: ${limitCheck.error}` };
+    }
     return { error: `Plan limit reached. You can only create up to ${limitCheck.limit} agents on your current plan.` };
   }
 

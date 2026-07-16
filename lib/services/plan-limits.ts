@@ -28,15 +28,17 @@ export async function checkAgentLimit(agencyId: string): Promise<{ allowed: bool
   const currentPlan = (billing?.plan?.toLowerCase() || "free") as PlanType;
   const planLimits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free;
 
-  if (billingError && billingError.code !== 'PGRST116') {
-    return { allowed: false, currentCount: 0, limit: planLimits.maxAgents, error: "Failed to check billing plan." };
+  // Ignore PGRST116 (No rows), 42P01 (Undefined table), and 42501 (Permission denied)
+  if (billingError && billingError.code !== 'PGRST116' && billingError.code !== '42P01' && billingError.code !== '42501') {
+    return { allowed: false, currentCount: 0, limit: planLimits.maxAgents, error: `Failed to check billing plan: ${billingError.message}` };
   }
 
   // 2. Count current agents
   const { count: currentAgentsCount, error: countError } = await supabase
     .from("ai_agents")
     .select("*", { count: "exact", head: true })
-    .eq("agency_id", agencyId);
+    .eq("agency_id", agencyId)
+    .is("deleted_at", null);
 
   if (countError) {
     return { allowed: false, currentCount: 0, limit: planLimits.maxAgents, error: "Failed to count existing agents." };
