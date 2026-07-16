@@ -125,11 +125,11 @@ export class KnowledgeBaseService {
       answer: input.answer,
       category: input.category,
       tags: input.tags,
-      search_keywords: input.searchKeywords,
-      source: input.source,
-      display_order: input.displayOrder,
-      is_active: input.isActive,
-      is_system: input.isSystem
+      search_keywords: null,
+      source: "custom" as KnowledgeBaseSource,
+      display_order: input.priority || 0,
+      is_active: input.is_active,
+      is_system: false
     };
     
     const { data, error } = await supabase
@@ -159,11 +159,8 @@ export class KnowledgeBaseService {
     if (input.answer !== undefined) updateData.answer = input.answer;
     if (input.category !== undefined) updateData.category = input.category;
     if (input.tags !== undefined) updateData.tags = input.tags;
-    if (input.searchKeywords !== undefined) updateData.search_keywords = input.searchKeywords;
-    if (input.source !== undefined) updateData.source = input.source;
-    if (input.displayOrder !== undefined) updateData.display_order = input.displayOrder;
-    if (input.isActive !== undefined) updateData.is_active = input.isActive;
-    if (input.isSystem !== undefined) updateData.is_system = input.isSystem;
+    if (input.priority !== undefined) updateData.display_order = input.priority;
+    if (input.is_active !== undefined) updateData.is_active = input.is_active;
     
     const { data, error } = await supabase
       .from("knowledge_base")

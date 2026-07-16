@@ -20,17 +20,18 @@ export const knowledgeBaseSchema = z.object({
     .array(
       z.string().trim().min(2, "Tag must be at least 2 characters").max(30, "Tag cannot exceed 30 characters")
     )
-    .max(20, "Maximum 20 tags allowed")
-    .default([]),
+    .max(20, "Maximum 20 tags allowed"),
   priority: z
     .number()
     .min(0, "Priority cannot be negative")
-    .max(100, "Priority cannot exceed 100")
-    .default(0),
-  is_active: z.boolean().default(true),
+    .max(100, "Priority cannot exceed 100"),
+  is_active: z.boolean(),
 });
 
 export type KnowledgeBaseFormData = z.infer<typeof knowledgeBaseSchema>;
+export type CreateKnowledgeBaseInput = KnowledgeBaseFormData;
+export type UpdateKnowledgeBaseInput = Partial<KnowledgeBaseFormData>;
+export type KnowledgeBaseSource = "custom" | "system" | "imported" | "all";
 
 export const searchKnowledgeBaseSchema = z.object({
   q: z.string().optional(),

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 import { resolveAgencyId } from "@/lib/auth/agency";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
-import { updateKnowledgeBaseSchema } from "@/lib/validations/knowledge-base";
+import { knowledgeBaseSchema } from "@/lib/validations/knowledge-base";
 import { z } from "zod";
 
 interface RouteContext {
@@ -62,7 +62,7 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const body = await request.json();
-    const validatedData = updateKnowledgeBaseSchema.parse(body);
+    const validatedData = knowledgeBaseSchema.partial().parse(body);
 
     const updatedEntry = await KnowledgeBaseService.update(agencyId, id, validatedData);
 

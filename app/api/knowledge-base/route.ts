@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 import { resolveAgencyId } from "@/lib/auth/agency";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
-import { createKnowledgeBaseSchema, searchKnowledgeBaseSchema } from "@/lib/validations/knowledge-base";
+import { knowledgeBaseSchema, searchKnowledgeBaseSchema } from "@/lib/validations/knowledge-base";
 import { z } from "zod";
 
 export async function GET(request: Request) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const validatedData = createKnowledgeBaseSchema.parse(body);
+    const validatedData = knowledgeBaseSchema.parse(body);
 
     const newEntry = await KnowledgeBaseService.create(agencyId, validatedData);
 

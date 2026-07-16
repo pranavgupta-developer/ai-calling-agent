@@ -108,9 +108,9 @@ export function KnowledgeForm({ initialData, trigger, open: externalOpen, onOpen
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+      {trigger && <SheetTrigger>{trigger}</SheetTrigger>}
       {!trigger && !isControlled && (
-        <SheetTrigger asChild>
+        <SheetTrigger>
           <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Knowledge Entry</Button>
         </SheetTrigger>
       )}

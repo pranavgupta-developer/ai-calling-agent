@@ -25,6 +25,7 @@ export default async function KnowledgeBasePage({ searchParams }: PageProps) {
   const query: SearchKnowledgeBaseQuery = {
     q: typeof params.q === "string" ? params.q : undefined,
     page: typeof params.page === "string" ? parseInt(params.page, 10) : 1,
+    limit: typeof params.limit === "string" ? parseInt(params.limit, 10) : 20,
     category: typeof params.category === "string" ? params.category : undefined,
     status: typeof params.status === "string" ? params.status as any : "active",
     source: typeof params.source === "string" ? params.source as any : "all",

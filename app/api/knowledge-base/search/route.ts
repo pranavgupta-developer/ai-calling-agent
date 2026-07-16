@@ -32,8 +32,9 @@ export async function GET(request: Request) {
       q: validatedQuery.q,
       limit: 10,
       status: "active",
+      source: "all",
       page: 1,
-      sort: "display_order"
+      sort: "highest_priority"
     });
 
     return NextResponse.json({ results: result.data });

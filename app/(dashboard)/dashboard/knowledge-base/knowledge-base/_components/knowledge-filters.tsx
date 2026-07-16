@@ -62,7 +62,7 @@ export function KnowledgeFilters() {
       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
         <Select
           value={searchParams.get("category") || ""}
-          onValueChange={(val) => handleFilterChange("category", val === "all" ? "" : val)}
+          onValueChange={(val) => handleFilterChange("category", val === "all" ? "" : (val || ""))}
         >
           <SelectTrigger className="w-[140px] bg-background">
             <SelectValue placeholder="All Categories" />
@@ -91,7 +91,7 @@ export function KnowledgeFilters() {
 
         <Select
           value={searchParams.get("status") || "active"}
-          onValueChange={(val) => handleFilterChange("status", val)}
+          onValueChange={(val) => handleFilterChange("status", val || "")}
         >
           <SelectTrigger className="w-[120px] bg-background">
             <SelectValue placeholder="Status" />
@@ -105,7 +105,7 @@ export function KnowledgeFilters() {
 
         <Select
           value={searchParams.get("source") || "all"}
-          onValueChange={(val) => handleFilterChange("source", val)}
+          onValueChange={(val) => handleFilterChange("source", val || "")}
         >
           <SelectTrigger className="w-[120px] bg-background">
             <SelectValue placeholder="Source" />
@@ -119,7 +119,7 @@ export function KnowledgeFilters() {
 
         <Select
           value={searchParams.get("sort") || "newest"}
-          onValueChange={(val) => handleFilterChange("sort", val)}
+          onValueChange={(val) => handleFilterChange("sort", val || "newest")}
         >
           <SelectTrigger className="w-[140px] bg-background">
             <SelectValue placeholder="Sort by" />
