@@ -23,7 +23,7 @@ export async function searchKnowledge(
 
   if (error) {
     console.error('Error in searchKnowledge (FTS):', error);
-    throw new Error('Knowledge base search failed');
+    // Do not throw; allow it to gracefully fallback to ilike search below
   }
 
   let results = data || [];

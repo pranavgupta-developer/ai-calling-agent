@@ -23,7 +23,7 @@ export async function searchListings(
 
   if (error) {
     console.error('Error in searchListings (FTS):', error);
-    throw new Error('Listings search failed');
+    // Do not throw; allow it to gracefully fallback to ilike search below
   }
 
   let results = data || [];
