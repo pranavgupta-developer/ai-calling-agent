@@ -1,23 +1,30 @@
-import { CalendarCheck } from "lucide-react";
+"use client";
+
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, PlusIcon } from "lucide-react";
 
 export default function AppointmentsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Appointments</h1>
-        <p className="text-sm text-muted-foreground">
-          View and manage property showings, client meetings, and follow-up
-          appointments.
-        </p>
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Appointments</h2>
+        <div className="flex items-center space-x-2">
+          <Button>
+            <PlusIcon className="w-4 h-4 mr-2" />
+            New Appointment
+          </Button>
+        </div>
       </div>
-
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-20">
-        <CalendarCheck className="size-12 text-muted-foreground/40" />
-        <h2 className="mt-4 text-lg font-semibold">No appointments scheduled</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Appointments will appear here when your AI agents or team schedule
-          them.
-        </p>
+      
+      <div className="mt-8">
+        <EmptyState
+          title="No Appointments Found"
+          description="You haven't scheduled any appointments yet. Appointments booked by AI or manually will appear here."
+          icon={<CalendarIcon className="w-6 h-6" />}
+          actionLabel="Create Appointment"
+          onAction={() => console.log('Create appointment modal...')}
+        />
       </div>
     </div>
   );
