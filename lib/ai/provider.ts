@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { AgentConfig, ConversationMessage, IAIProvider } from './types';
+import { AgentConfig, ConversationMessage, IAIProvider, ProviderResponse } from './types';
 
 // We map our simplified roles to OpenAI's expected types.
 type OpenAIRole = 'system' | 'user' | 'assistant' | 'tool';
@@ -17,7 +17,7 @@ export class OpenAIProvider implements IAIProvider {
     messages: ConversationMessage[],
     agentConfig: AgentConfig,
     tools?: any[]
-  ): Promise<ConversationMessage> {
+  ): Promise<ProviderResponse> {
     const formattedMessages = messages.map((msg) => {
       const message: any = {
         role: msg.role as OpenAIRole,
@@ -77,6 +77,13 @@ export class OpenAIProvider implements IAIProvider {
       }));
     }
 
-    return resultMessage;
+    return {
+      message: resultMessage,
+      usage: response.usage ? {
+        prompt_tokens: response.usage.prompt_tokens,
+        completion_tokens: response.usage.completion_tokens,
+        total_tokens: response.usage.total_tokens,
+      } : undefined
+    };
   }
 }

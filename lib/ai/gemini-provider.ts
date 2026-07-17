@@ -1,5 +1,5 @@
 import { GoogleGenAI, Content, Part } from '@google/genai';
-import { AgentConfig, ConversationMessage, IAIProvider } from './types';
+import { AgentConfig, ConversationMessage, IAIProvider, ProviderResponse } from './types';
 
 export class GeminiProvider implements IAIProvider {
   private client: GoogleGenAI;
@@ -14,7 +14,7 @@ export class GeminiProvider implements IAIProvider {
     messages: ConversationMessage[],
     agentConfig: AgentConfig,
     tools?: any[]
-  ): Promise<ConversationMessage> {
+  ): Promise<ProviderResponse> {
     
     let systemInstruction = '';
     const geminiContents: Content[] = [];
@@ -123,6 +123,14 @@ export class GeminiProvider implements IAIProvider {
       }));
     }
 
-    return resultMessage;
+    return {
+      message: resultMessage,
+      usage: response.usageMetadata ? {
+        prompt_tokens: response.usageMetadata.promptTokenCount || 0,
+        completion_tokens: response.usageMetadata.candidatesTokenCount || 0,
+        total_tokens: response.usageMetadata.totalTokenCount || 0,
+      } : undefined
+    };
   }
 }
+
