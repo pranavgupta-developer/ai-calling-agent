@@ -33,7 +33,7 @@ export const clientUpdateSchema = z.object({
   notes: z.string().max(2000).nullable().optional(),
 });
 
-export const appointmentInsertSchema = z.object({
+const appointmentInsertSchemaBase = z.object({
   agency_id: z.string().uuid(),
   client_id: z.string().uuid(),
   listing_id: z.string().uuid().nullable().optional(),
@@ -52,12 +52,14 @@ export const appointmentInsertSchema = z.object({
   internal_notes: z.string().max(2000).nullable().optional(),
   created_by_ai: z.boolean().default(false),
   ai_confidence_score: z.number().min(0).max(100).nullable().optional(),
-}).refine(data => new Date(data.end_time) > new Date(data.start_time), {
+});
+
+export const appointmentInsertSchema = appointmentInsertSchemaBase.refine(data => new Date(data.end_time) > new Date(data.start_time), {
   message: "End time must be after start time",
   path: ["end_time"]
 });
 
-export const appointmentUpdateSchema = z.object({
+const appointmentUpdateSchemaBase = z.object({
   client_id: z.string().uuid().optional(),
   listing_id: z.string().uuid().nullable().optional(),
   service_id: z.string().uuid().nullable().optional(),
@@ -73,8 +75,9 @@ export const appointmentUpdateSchema = z.object({
   timezone: z.string().regex(timezoneRegex).optional(),
   client_notes: z.string().max(2000).nullable().optional(),
   internal_notes: z.string().max(2000).nullable().optional(),
-  ai_confidence_score: z.number().min(0).max(100).nullable().optional(),
-}).refine(data => {
+});
+
+export const appointmentUpdateSchema = appointmentUpdateSchemaBase.refine(data => {
   if (data.start_time && data.end_time) {
     return new Date(data.end_time) > new Date(data.start_time);
   }
@@ -101,3 +104,78 @@ export const businessHourExceptionInsertSchema = z.object({
   closes_at: z.string().regex(timeRegex).nullable().optional(),
   reason: z.string().max(500).nullable().optional(),
 });
+
+export const getAppointmentsFilterSchema = z.object({
+  q: z.string().optional(),
+  status: appointmentStatusSchema.optional(),
+  source: appointmentSourceSchema.optional(),
+  payment_status: paymentStatusSchema.optional(),
+  date_from: z.string().optional(),
+  date_to: z.string().optional(),
+  client_id: z.string().optional(),
+  ai_agent_id: z.string().optional(),
+  page: z.number().int().positive().default(1),
+  limit: z.number().int().positive().default(20),
+});
+
+export type GetAppointmentsFilterInput = z.infer<typeof getAppointmentsFilterSchema>;
+
+// Form Schemas
+export const appointmentFormSchema = z.object({
+  client_id: z.string().min(1, 'Client is required'),
+  listing_id: z.string().optional(),
+  service_id: z.string().optional(),
+  ai_agent_id: z.string().optional(),
+  human_agent_id: z.string().optional(),
+  appointment_type: appointmentTypeSchema.default('consultation'),
+  appointment_source: appointmentSourceSchema.default('dashboard'),
+  date: z.date(),
+  time: z.string().min(1, 'Time is required'), // Format HH:mm
+  duration_minutes: z.coerce.number().min(15, 'Minimum duration is 15 minutes').default(30),
+  timezone: z.string().default('UTC'),
+  client_notes: z.string().optional(),
+  internal_notes: z.string().optional(),
+  payment_status: paymentStatusSchema.default('unpaid'),
+});
+
+export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
+
+export const rescheduleAppointmentSchema = z.object({
+  date: z.date(),
+  time: z.string().min(1, 'New time is required'),
+  duration_minutes: z.coerce.number().min(15).default(30),
+  reason: z.string().optional(),
+});
+
+export type RescheduleAppointmentValues = z.infer<typeof rescheduleAppointmentSchema>;
+
+export const cancelAppointmentSchema = z.object({
+  reason: z.string().min(5, 'Please provide a reason for cancellation'),
+});
+
+export type CancelAppointmentValues = z.infer<typeof cancelAppointmentSchema>;
+
+export const createAppointmentActionSchema = appointmentInsertSchemaBase.omit({
+  agency_id: true,
+  status: true,
+  created_by_ai: true,
+  ai_confidence_score: true,
+}).extend({
+  status: appointmentStatusSchema.optional(),
+  start_time: z.string().datetime(),
+  end_time: z.string().datetime(),
+}).refine(data => new Date(data.end_time) > new Date(data.start_time), {
+  message: "End time must be after start time",
+  path: ["end_time"]
+});
+
+export const updateAppointmentActionSchema = appointmentUpdateSchemaBase.refine(data => {
+  if (data.start_time && data.end_time) {
+    return new Date(data.end_time) > new Date(data.start_time);
+  }
+  return true;
+}, {
+  message: "End time must be after start time",
+  path: ["end_time"]
+});
+

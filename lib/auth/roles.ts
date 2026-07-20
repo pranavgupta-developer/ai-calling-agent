@@ -12,7 +12,7 @@ const DASHBOARD_ROLES: UserRole[] = ["OWNER", "ADMIN", "MANAGER", "AGENT"];
 
 export function getRedirectForRole(role: UserRole): string {
   if (role === "CLIENT") {
-    return "/client-portal";
+    return "/client/dashboard";
   }
 
   if (role && DASHBOARD_ROLES.includes(role)) {

@@ -43,7 +43,7 @@ export function BusinessHoursTable({ hours }: BusinessHoursTableProps) {
                 <TableCell className="font-medium">{day}</TableCell>
                 <TableCell>
                   {row.is_open ? (
-                    <Badge variant="success" className="bg-green-100 text-green-800">Open</Badge>
+                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Open</Badge>
                   ) : (
                     <Badge variant="secondary">Closed</Badge>
                   )}

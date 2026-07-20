@@ -20,7 +20,7 @@ const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 const AGENCY_PREFIXES = ["/dashboard"];
 
 /** Routes only CLIENT role may access */
-const CLIENT_PREFIXES = ["/client-portal"];
+const CLIENT_PREFIXES = ["/client"];
 
 // ── Helpers ──
 
@@ -33,7 +33,7 @@ function matchesPrefix(pathname: string, prefixes: string[]): boolean {
 // ── Main ──
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +87,7 @@ export async function updateSession(request: NextRequest) {
       const agencyData = await getAgencyData(supabase, user.id);
       if (!agencyData) {
         return NextResponse.redirect(
-          new URL("/client-portal", request.url)
+          new URL("/client/dashboard", request.url)
         );
       }
       
@@ -154,7 +154,7 @@ async function getRedirectForUser(
 
   // Then check client_users
   if (await checkIsClient(supabase, userId)) {
-    return "/client-portal";
+    return "/client/dashboard";
   }
 
   // No role found — send to onboarding
