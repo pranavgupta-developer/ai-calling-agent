@@ -5,7 +5,8 @@ import { getAppointment } from "@/lib/actions/client/appointments";
 import { AppointmentTimeline } from "@/components/client-portal/appointment-timeline";
 import { AppointmentStatusBadge, PaymentStatusBadge } from "@/components/client-portal/status-badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function ClientAppointmentDetailsPage({
   params,
@@ -22,9 +23,9 @@ export default async function ClientAppointmentDetailsPage({
         <p className="text-muted-foreground mb-4">
           {error || "The requested appointment could not be found."}
         </p>
-        <Button asChild variant="outline">
-          <Link href="/client/appointments">Back to Appointments</Link>
-        </Button>
+        <Link href="/client/appointments" className={cn(buttonVariants({ variant: "outline" }))}>
+          Back to Appointments
+        </Link>
       </div>
     );
   }
@@ -36,11 +37,9 @@ export default async function ClientAppointmentDetailsPage({
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/client/appointments">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
+        <Link href="/client/appointments" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Appointment Details</h1>
           <p className="text-muted-foreground text-sm">
@@ -152,11 +151,9 @@ export default async function ClientAppointmentDetailsPage({
               
               {appointment.meeting_url && (
                 <div className="pt-2">
-                  <Button asChild className="w-full" variant="outline">
-                    <a href={appointment.meeting_url} target="_blank" rel="noopener noreferrer">
-                      Join Virtual Meeting
-                    </a>
-                  </Button>
+                  <a href={appointment.meeting_url} target="_blank" rel="noopener noreferrer" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+                    Join Virtual Meeting
+                  </a>
                 </div>
               )}
             </CardContent>

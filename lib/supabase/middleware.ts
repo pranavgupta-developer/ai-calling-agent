@@ -14,7 +14,7 @@ const PROTECTED_PREFIXES = [
 ];
 
 /** Auth routes — authenticated users should be redirected away */
-const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/client/login", "/client/signup", "/client/forgot-password"];
 
 /** Routes only agency roles (OWNER, ADMIN, MANAGER, AGENT) may access */
 const AGENCY_PREFIXES = ["/dashboard"];
@@ -86,9 +86,12 @@ export async function updateSession(request: NextRequest) {
     if (matchesPrefix(pathname, AGENCY_PREFIXES)) {
       const agencyData = await getAgencyData(supabase, user.id);
       if (!agencyData) {
-        return NextResponse.redirect(
-          new URL("/client/dashboard", request.url)
-        );
+        const isClient = await checkIsClient(supabase, user.id);
+        if (isClient) {
+          return NextResponse.redirect(new URL("/client/dashboard", request.url));
+        } else {
+          return NextResponse.redirect(new URL("/onboarding", request.url));
+        }
       }
       
       // If they are an agency member but haven't completed onboarding
@@ -133,8 +136,10 @@ async function checkIsClient(
   supabase: ReturnType<typeof createServerClient>,
   userId: string
 ): Promise<boolean> {
+  // A client is anyone who has a client_profiles record, 
+  // even if they don't have an agency link (client_users) yet.
   const { data } = await supabase
-    .from("client_users")
+    .from("client_profiles")
     .select("id")
     .eq("auth_user_id", userId)
     .maybeSingle();

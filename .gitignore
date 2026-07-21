@@ -123,3 +123,6 @@ supabase/.temp/
 .claude/
 Real-estate-ai-calling-agent-dev-brief.md
 temp.txt
+supabase/migrations/20260722000000_client_signup.sql
+supabase/migrations/20260723000000_fix_client_rls_recursion.sql
+supabase/migrations/20260723000001_fix_all_rls_recursion.sql
