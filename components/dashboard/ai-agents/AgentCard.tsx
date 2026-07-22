@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Settings2, Trash2, Edit3, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MoreVertical, Settings2, Trash2, Edit3, MessageSquare, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 import { AIAgent } from "@/types/ai-agent";
@@ -23,6 +24,7 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, onEdit, onToggleStatus, onDelete, onDuplicate }: AgentCardProps) {
+  const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
@@ -44,7 +46,10 @@ export function AgentCard({ agent, onEdit, onToggleStatus, onDelete, onDuplicate
 
   return (
     <>
-      <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-md border-slate-200">
+      <Card 
+        className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-md border-slate-200 cursor-pointer hover:border-primary/50"
+        onClick={() => router.push(`/dashboard/ai-agents/${agent.id}`)}
+      >
         <CardHeader className="pb-4">
           <div className="flex justify-between items-start gap-4">
             <div className="space-y-1">
@@ -53,15 +58,20 @@ export function AgentCard({ agent, onEdit, onToggleStatus, onDelete, onDuplicate
                 {agent.description || <span className="italic text-slate-400">No description provided</span>}
               </CardDescription>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-slate-100 h-8 w-8 -mt-2 -mr-2 text-slate-500">
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(agent)}>
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Edit Agent
-                </DropdownMenuItem>
+            <div onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-slate-100 h-8 w-8 -mt-2 -mr-2 text-slate-500">
+                  <MoreVertical className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/ai-agents/${agent.id}`)}>
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Manage Agent
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(agent)}>
+                    <Edit3 className="mr-2 h-4 w-4" />
+                    Quick Edit
+                  </DropdownMenuItem>
                 <DropdownMenuItem onClick={async () => {
                   try {
                     const res = await onDuplicate(agent.id);
@@ -84,6 +94,7 @@ export function AgentCard({ agent, onEdit, onToggleStatus, onDelete, onDuplicate
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </CardHeader>
         
@@ -115,7 +126,10 @@ export function AgentCard({ agent, onEdit, onToggleStatus, onDelete, onDuplicate
           </div>
         </CardContent>
         
-        <CardFooter className="pt-4 pb-4 border-t bg-slate-50/50 flex justify-between items-center">
+        <CardFooter 
+          className="pt-4 pb-4 border-t bg-slate-50/50 flex justify-between items-center"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center gap-2">
             <Switch 
               checked={agent.is_active} 

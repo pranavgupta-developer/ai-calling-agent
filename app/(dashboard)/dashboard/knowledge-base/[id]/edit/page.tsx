@@ -1,6 +1,7 @@
 import { EntryForm } from '@/features/knowledge-base/components/entry-form';
 import { getKnowledgeCategories } from '@/features/knowledge-base/queries/categories';
 import { getKnowledgeEntry } from '@/features/knowledge-base/queries/entries';
+import { createClient } from '@/lib/supabase/server';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -13,6 +14,12 @@ export default async function EditKnowledgeEntryPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    notFound();
+  }
 
   const [categoriesResult, entryResult] = await Promise.all([
     getKnowledgeCategories(),
@@ -37,7 +44,7 @@ export default async function EditKnowledgeEntryPage({
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center gap-4">
         <Link 
-          href={`/dashboard/knowledge-base/${params.id}`}
+          href={`/dashboard/knowledge-base/${id}`}
           className="p-2 rounded-full hover:bg-muted/50 transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

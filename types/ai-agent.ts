@@ -33,6 +33,14 @@ export enum AgentPersonality {
   CUSTOM = "Custom"
 }
 
+export type VoiceStatus =
+  | 'inactive'
+  | 'provisioning'
+  | 'active'
+  | 'suspended'
+  | 'failed';
+
+
 export interface AIAgent {
   id: string;
   agency_id: string;
@@ -64,6 +72,9 @@ export interface AIAgent {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
+  
+  voice_enabled: boolean;
+  voice_status: VoiceStatus | null;
 }
 
 export interface CreateAIAgentInput {
